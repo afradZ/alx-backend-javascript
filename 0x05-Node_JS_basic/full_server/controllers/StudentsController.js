@@ -1,80 +1,74 @@
-import readDatabase from '../utils'; // Import the readDatabase function
-import path from 'path'; // To resolve file path for process.argv
+import readDatabase from '../utils';
 
 /**
- * @class StudentsController
- * @description Controller for student-related routes.
+ * The list of supported majors.
+ */
+const VALID_MAJORS = ['CS', 'SWE'];
+
+/**
+ * Contains the student-related route handlers.
+ * @author Bezaleel Olakunori <https://github.com/B3zaleel>
  */
 class StudentsController {
-  /**
-   * Retrieves all students and organizes them by field.
-   * Displays the count and list of first names for each field.
-   * @param {import('express').Request} request - The Express request object.
-   * @param {import('express').Response} response - The Express response object.
-   * @returns {Promise<void>}
-   */
-  static async getAllStudents(request, response) {
-    // The database path is passed as an argument to server.js
-    // We assume it's the second argument in process.argv (index 2)
-    const dbPath = process.argv[2];
+  static getAllStudents(request, response) {
+    const dataPath = process.argv.length > 2 ? process.argv[2] : '';
 
-    if (!dbPath) {
-      return response.status(500).send('Cannot load the database: Database path not provided.');
-    }
+    readDatabase(dataPath)
+      .then((studentGroups) => {
+        const responseParts = ['This is the list of our students'];
+        // A comparison function for ordering a list of strings in ascending
+        // order by alphabetic order and case insensitive
+        const cmpFxn = (a, b) => {
+          if (a[0].toLowerCase() < b[0].toLowerCase()) {
+            return -1;
+          }
+          if (a[0].toLowerCase() > b[0].toLowerCase()) {
+            return 1;
+          }
+          return 0;
+        };
 
-    try {
-      const studentsByField = await readDatabase(dbPath);
-      let output = 'This is the list of our students\n';
-
-      // Get fields and sort them alphabetically (case-insensitive)
-      const fields = Object.keys(studentsByField).sort((a, b) =>
-        a.toLowerCase().localeCompare(b.toLowerCase())
-      );
-
-      for (const field of fields) {
-        const studentList = studentsByField[field];
-        output += `Number of students in ${field}: ${studentList.length}. List: ${studentList.join(', ')}\n`;
-      }
-      response.status(200).send(output.trim()); // trim to remove trailing newline
-    } catch (error) {
-      response.status(500).send(error.message);
-    }
+        for (const [field, group] of Object.entries(studentGroups).sort(cmpFxn)) {
+          responseParts.push([
+            `Number of students in ${field}: ${group.length}.`,
+            'List:',
+            group.map((student) => student.firstname).join(', '),
+          ].join(' '));
+        }
+        response.status(200).send(responseParts.join('\n'));
+      })
+      .catch((err) => {
+        response
+          .status(500)
+          .send(err instanceof Error ? err.message : err.toString());
+      });
   }
 
-  /**
-   * Retrieves students filtered by a specific major.
-   * @param {import('express').Request} request - The Express request object.
-   * @param {import('express').Response} response - The Express response object.
-   * @returns {Promise<void>}
-   */
-  static async getAllStudentsByMajor(request, response) {
+  static getAllStudentsByMajor(request, response) {
+    const dataPath = process.argv.length > 2 ? process.argv[2] : '';
     const { major } = request.params;
-    const dbPath = process.argv[2];
 
-    if (!dbPath) {
-      return response.status(500).send('Cannot load the database: Database path not provided.');
+    if (!VALID_MAJORS.includes(major)) {
+      response.status(500).send('Major parameter must be CS or SWE');
+      return;
     }
+    readDatabase(dataPath)
+      .then((studentGroups) => {
+        let responseText = '';
 
-    // Validate the major parameter
-    if (major !== 'CS' && major !== 'SWE') {
-      return response.status(500).send('Major parameter must be CS or SWE');
-    }
-
-    try {
-      const studentsByField = await readDatabase(dbPath);
-      const studentList = studentsByField[major];
-
-      if (!studentList || studentList.length === 0) {
-        // If the major exists but has no students, or if the major field itself is not found
-        return response.status(200).send(`List: `); // Return empty list for consistency
-      }
-
-      response.status(200).send(`List: ${studentList.join(', ')}`);
-    } catch (error) {
-      response.status(500).send(error.message);
-    }
+        if (Object.keys(studentGroups).includes(major)) {
+          const group = studentGroups[major];
+          responseText = `List: ${group.map((student) => student.firstname).join(', ')}`;
+        }
+        response.status(200).send(responseText);
+      })
+      .catch((err) => {
+        response
+          .status(500)
+          .send(err instanceof Error ? err.message : err.toString());
+      });
   }
 }
 
 export default StudentsController;
-
+module.exports = StudentsController;

@@ -1,17 +1,13 @@
 import express from 'express';
-import useRoutes from './routes'; // Import the function to configure routes
+import mapRoutes from './routes';
 
 const app = express();
-const PORT = 1245; // Define the port
+const PORT = 1245;
 
-// Configure all routes for the application
-useRoutes(app);
-
-// Start the server
+mapRoutes(app);
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-  // Log the database path being used, which is passed as an argument
-  console.log(`Using database file: ${process.argv[2] || 'Not specified'}`);
+  console.log(`Server listening on PORT ${PORT}`);
 });
 
 export default app;
+module.exports = app;

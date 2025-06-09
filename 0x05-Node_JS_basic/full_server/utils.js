@@ -1,54 +1,49 @@
-import fs from 'fs/promises'; // Use fs.promises for async file operations
-import path from 'path'; // To resolve file path correctly
+import fs from 'fs';
 
 /**
- * Reads the database asynchronously and returns a promise.
- *
- * @param {string} filePath - The path to the database file (CSV).
- * @returns {Promise<Object<string, string[]>>} A promise that resolves with
- * an object where keys are fields (e.g., 'CS', 'SWE') and values are
- * arrays of student first names. Rejects if the file is not accessible.
+ * Reads the data of students in a CSV data file.
+ * @param {String} dataPath The path to the CSV data file.
+ * @author Bezaleel Olakunori <https://github.com/B3zaleel>
+ * @returns {Promise<{
+ *   String: {firstname: String, lastname: String, age: number}[]
+ * }>}
  */
-const readDatabase = (filePath) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Get the absolute path if relative path is provided from process.argv
-      const absolutePath = path.resolve(process.cwd(), filePath);
-      const data = await fs.readFile(absolutePath, { encoding: 'utf8' });
-
-      const lines = data.split('\n').filter(line => line.trim() !== '');
-      if (lines.length === 0) {
-        return resolve({}); // Resolve with empty object if file is empty or only header
+const readDatabase = (dataPath) => new Promise((resolve, reject) => {
+  if (!dataPath) {
+    reject(new Error('Cannot load the database'));
+  }
+  if (dataPath) {
+    fs.readFile(dataPath, (err, data) => {
+      if (err) {
+        reject(new Error('Cannot load the database'));
       }
+      if (data) {
+        const fileLines = data
+          .toString('utf-8')
+          .trim()
+          .split('\n');
+        const studentGroups = {};
+        const dbFieldNames = fileLines[0].split(',');
+        const studentPropNames = dbFieldNames
+          .slice(0, dbFieldNames.length - 1);
 
-      const headers = lines[0].split(',');
-      const firstNameIndex = headers.indexOf('firstname');
-      const fieldIndex = headers.indexOf('field');
-
-      if (firstNameIndex === -1 || fieldIndex === -1) {
-        return reject(new Error('Invalid CSV format: missing "firstname" or "field" header'));
-      }
-
-      const studentsByField = {};
-
-      for (let i = 1; i < lines.length; i += 1) { // Start from 1 to skip header
-        const studentData = lines[i].split(',');
-        const firstName = studentData[firstNameIndex];
-        const field = studentData[fieldIndex];
-
-        if (field) { // Ensure field is not empty
-          if (!studentsByField[field]) {
-            studentsByField[field] = [];
+        for (const line of fileLines.slice(1)) {
+          const studentRecord = line.split(',');
+          const studentPropValues = studentRecord
+            .slice(0, studentRecord.length - 1);
+          const field = studentRecord[studentRecord.length - 1];
+          if (!Object.keys(studentGroups).includes(field)) {
+            studentGroups[field] = [];
           }
-          studentsByField[field].push(firstName);
+          const studentEntries = studentPropNames
+            .map((propName, idx) => [propName, studentPropValues[idx]]);
+          studentGroups[field].push(Object.fromEntries(studentEntries));
         }
+        resolve(studentGroups);
       }
-      resolve(studentsByField);
-    } catch (error) {
-      reject(new Error('Cannot load the database'));
-    }
-  });
-};
+    });
+  }
+});
 
 export default readDatabase;
-
+module.exports = readDatabase;
