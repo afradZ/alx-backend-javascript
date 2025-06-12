@@ -1,0 +1,16 @@
+{
+  "name": "0x06-unitests_in_js",
+  "version": "1.0.0",
+  "description": "unittests in js",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "^11.6.0"
+  }
+}
