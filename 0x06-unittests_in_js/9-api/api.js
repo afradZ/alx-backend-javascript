@@ -1,20 +1,23 @@
+// 9-api/api.js
 const express = require('express');
-
 const app = express();
-const PORT = 7865;
+const port = 7865;
 
-app.get('/', (_, res) => {
-  res.send('Welcome to the payment system');
+// Reuse root route if needed
+app.get('/', (req, res) => {
+  res.status(200).send('Welcome to the payment system');
 });
 
-app.get('/cart/:id(\\d+)', (req, res) => {
+// ✅ New endpoint with numeric ID validation using regex
+app.get('/cart/:id([0-9]+)', (req, res) => {
   const id = req.params.id;
-
   res.send(`Payment methods for cart ${id}`);
 });
 
-app.listen(PORT, () => {
-  console.log(`API available on localhost port ${PORT}`);
+// Start server
+app.listen(port, () => {
+  console.log(`API available on localhost port ${port}`);
 });
 
 module.exports = app;
+
