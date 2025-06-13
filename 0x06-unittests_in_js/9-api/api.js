@@ -5,13 +5,12 @@ const port = 7865;
 
 // Reuse root route if needed
 app.get('/', (req, res) => {
-  res.status(200).send('Welcome to the payment system');
+  res.send('Welcome to the payment system');
 });
 
 // ✅ New endpoint with numeric ID validation using regex
 app.get('/cart/:id([0-9]+)', (req, res) => {
-  const id = req.params.id;
-  res.send(`Payment methods for cart ${id}`);
+  res.send(`Payment methods for cart ${req.params.id}`);
 });
 
 // Start server
