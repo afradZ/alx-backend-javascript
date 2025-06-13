@@ -1,11 +1,17 @@
-// 9-api/api.test.js
 const request = require('supertest');
-const app = require('./api'); // import the express app
-const { describe, it } = require('mocha');
 const { expect } = require('chai');
+const app = require('./api');
 
 describe('API Tests', () => {
-  // Existing tests for '/' if needed...
+  it('GET / should return welcome message', (done) => {
+    request(app)
+      .get('/')
+      .expect(200)
+      .end((err, res) => {
+        expect(res.text).to.equal('Welcome to the payment system');
+        done();
+      });
+  });
 
   describe('GET /cart/:id', () => {
     it('should return 200 and correct message for valid numeric id', (done) => {
