@@ -5,7 +5,7 @@ const PORT = 7865;
 
 app.use(express.json());
 
-app.get('/', (_req, res) => {
+app.get('/', (req, res) => {
   res.send('Welcome to the payment system');
 });
 
